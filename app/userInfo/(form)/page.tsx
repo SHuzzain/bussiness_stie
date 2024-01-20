@@ -8,7 +8,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import React, { useEffect } from "react";
+import React, { CSSProperties, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -25,6 +25,7 @@ import { useToast } from "@/components/ui/use-toast";
 import Error from "next/error";
 import { ToastAction } from "@/components/ui/toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import FancyBorder from "../(boder-animation)/BorderAnimation";
 
 type Props = {};
 
@@ -99,10 +100,24 @@ const UserFormPage = (props: Props) => {
   useEffect(() => {
     fetchData();
   }, [form.watch("state")]);
-
+  const borderStyle: CSSProperties[] = [
+    {
+      borderRadius: "30% 70% 58% 42% / 30% 38% 62% 70%",
+      width: 1000,
+      height: 1000,
+      left: "2%",
+    },
+    {
+      borderRadius: "61% 39% 58% 42% / 62% 57% 43% 38% ",
+      width: 500,
+      height: 500,
+      right: "5%",
+      top: "1%",
+    },
+  ];
   return (
     <article className="bg-[#171f38] h-full flex justify-center items-center">
-      <div className="bg-[#242e4c9d] max-w-screen-xl flex-1">
+      <div className="bg-[#242e4c9d] max-w-screen-xl flex-1 z-10">
         <section className="flex items-center gap-5 flex-col text-gray-300 py-3">
           <h6 className="text-xl font-medium">Don't give up</h6>
           <h3 className="text-3xl font-semibold">Just One Step</h3>
@@ -329,6 +344,14 @@ const UserFormPage = (props: Props) => {
           </Form>
         </section>
       </div>
+      {borderStyle.map((object, index) => (
+        <FancyBorder
+          key={index}
+          mode="tailwind"
+          classNames="bg-[#121232] fixed [animation:_spin_10s_linear_infinite]"
+          styles={object}
+        />
+      ))}
     </article>
   );
 };
