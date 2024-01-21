@@ -8,9 +8,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import React, { CSSProperties, useEffect } from "react";
+import React, { CSSProperties, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,46 +22,64 @@ import {
 } from "@/components/ui/select";
 import { allStates } from "../(form_raw_value)/Options";
 import { useToast } from "@/components/ui/use-toast";
-import Error from "next/error";
 import { ToastAction } from "@/components/ui/toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import FancyBorder from "../(boder-animation)/BorderAnimation";
+import AISuggestions from "@/components/aiSuggestions";
+import axios from "axios";
+import { useRouter } from "next/navigation";
 
 type Props = {};
 
 const formSchema = z.object({
   firstName: z.string().min(2).max(50),
   email: z.string().email(),
-  state: z.string(),
+  state: z.string().min(1),
   cityOptions: z.array(
     z.object({
       city_name: z.string(),
     })
   ),
   city: z.string(),
-  qulification: z.string(),
-  capitalInvesment: z.string(),
+  qualification: z.string().min(1),
+  capitalInvestment: z.string().min(1),
   experience: z.string(),
+  aiSuggestion: z.string().optional(),
 });
 
 const UserFormPage = (props: Props) => {
   const { toast } = useToast();
+  const [drawer, setDrawer] = useState(false);
+  const { replace } = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       firstName: "",
-      capitalInvesment: "",
       city: "",
       cityOptions: [],
       email: "",
-      experience: "",
-      qulification: "",
       state: "",
+      aiSuggestion: "",
     },
+    shouldUnregister: false,
   });
 
-  const Submit = (values: z.infer<typeof formSchema>) => {
-    console.log(values);
+  const Submit = async (formData: z.infer<typeof formSchema>) => {
+    try {
+      setDrawer(true);
+      const { cityOptions, aiSuggestion, ...data } = formData;
+      const res = await axios.get("/api/openAi", {
+        params: data,
+      });
+      form.setValue("aiSuggestion", res.data);
+    } catch (error) {
+      setDrawer(false);
+      toast({
+        title: "job suggestion",
+        description: "something went wrong",
+        variant: "destructive",
+      });
+    }
   };
 
   const fetchData = async () => {
@@ -124,7 +142,10 @@ const UserFormPage = (props: Props) => {
         </section>
         <section className="max-w-xl mx-auto text-gray-300 py-3">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(Submit)} className="space-y-6">
+            <form
+              onSubmit={form.handleSubmit(Submit)}
+              className="grid grid-cols-2 gap-6"
+            >
               <FormField
                 control={form.control}
                 name="firstName"
@@ -205,17 +226,11 @@ const UserFormPage = (props: Props) => {
 
               <FormField
                 control={form.control}
-                rules={{
-                  required: true,
-                }}
                 name="city"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-slate-300">City</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl className="bg-[#171f38]">
                         <SelectTrigger>
                           <SelectValue
@@ -242,18 +257,18 @@ const UserFormPage = (props: Props) => {
 
               <FormField
                 control={form.control}
-                name="qulification"
+                name="qualification"
                 rules={{
                   required: true,
                 }}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-slate-300">
-                      Qulification
+                      Qualification
                     </FormLabel>
                     <FormControl className="bg-[#171f38]">
                       <Input
-                        placeholder="Qulification"
+                        placeholder="Qualification"
                         {...field}
                         className="placeholder:text-slate-300"
                       />
@@ -265,14 +280,14 @@ const UserFormPage = (props: Props) => {
 
               <FormField
                 control={form.control}
-                name="capitalInvesment"
+                name="capitalInvestment"
                 rules={{
                   required: true,
                 }}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-slate-300">
-                      Capital Invesment
+                      Capital Investment
                     </FormLabel>
                     <Select
                       onValueChange={field.onChange}
@@ -336,10 +351,17 @@ const UserFormPage = (props: Props) => {
                   </FormItem>
                 )}
               />
-
-              <Button type="submit" hidden className="mt-3">
-                Submit
-              </Button>
+              <div className="col-span-2 flex gap-4">
+                <Button
+                  type="reset"
+                  className="flex-1 bg-transparent border hover:border-transparent border-white transition-colors"
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" className="flex-1">
+                  Submit
+                </Button>
+              </div>
             </form>
           </Form>
         </section>
@@ -352,6 +374,9 @@ const UserFormPage = (props: Props) => {
           styles={object}
         />
       ))}
+      <FormProvider {...form}>
+        {drawer && <AISuggestions isOpen={drawer} setDrawer={setDrawer} />}
+      </FormProvider>
     </article>
   );
 };
