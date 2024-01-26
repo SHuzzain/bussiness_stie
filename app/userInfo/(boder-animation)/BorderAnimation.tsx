@@ -12,7 +12,7 @@ const FancyBorder = (props: Props) => {
   return (
     <div
       style={styles}
-      className={`${
+      className={`[animation:_spin_20s_linear_infinite] ${
         mode === "tailwind" || mode === "classsName" ? `${classNames} ` : null
       } `}
     ></div>

@@ -31,7 +31,7 @@ import { useRouter } from "next/navigation";
 
 type Props = {};
 
-const formSchema = z.object({
+export const formSchema = z.object({
   firstName: z.string().min(2).max(50),
   email: z.string().email(),
   state: z.string().min(1),
@@ -65,6 +65,7 @@ const UserFormPage = (props: Props) => {
   });
 
   const Submit = async (formData: z.infer<typeof formSchema>) => {
+    debugger;
     try {
       setDrawer(true);
       const { cityOptions, aiSuggestion, ...data } = formData;
@@ -82,31 +83,52 @@ const UserFormPage = (props: Props) => {
     }
   };
 
-  const fetchData = async () => {
+  const getAuthToken = async (
+    fn: (authToken: { data: { auth_token: string } }) => void,
+    REST_API: boolean
+  ) => fn(await axios.get("/api/authToken", { params: { REST_API } }));
+
+  const fetchData = async (
+    authToken: { data: { auth_token: string } } | undefined
+  ) => {
     const stateName = form.watch("state");
-    if (!stateName) return;
     try {
       form.setValue("city", "");
-      const response = await fetch(
-        `https://www.universal-tutorial.com/api/cities/${stateName}`,
-        {
-          headers: {
-            Authorization:
-              "Bearer " + process.env.NEXT_PUBLIC_ACCESS_TOKEN_STATE,
-            Accept: "*/*",
-          },
-          next: { revalidate: 60 * 60 * 24 },
-        }
-      );
-      const data = await response.json();
+
+      const Authorization = authToken
+        ? "Bearer " + authToken.data.auth_token
+        : "";
+      const response = await axios.get("/api/getCityList", {
+        params: {
+          stateName,
+          Authorization,
+        },
+      });
+
+      const data = await response.data;
+      if (data?.error) throw data.error;
       form.setValue("cityOptions", data);
     } catch (error) {
+      let toTokenGet = false;
+
+      if (typeof error === "object" && error !== null && "name" in error) {
+        const typedError: Record<"name", unknown> = error;
+        toTokenGet = typedError?.name === "TokenExpiredError";
+      }
+
       toast({
         title: "Api fetch Error",
-        description: "please referce page or select other state",
+        description: toTokenGet
+          ? "TokenExpiredError"
+          : "please referce page or select other state",
         variant: "destructive",
         action: (
-          <ToastAction altText="Try again" onClick={() => fetchData()}>
+          <ToastAction
+            altText="Try again"
+            onClick={() =>
+              toTokenGet ? getAuthToken(fetchData, true) : fetchData(undefined)
+            }
+          >
             Try again
           </ToastAction>
         ),
@@ -116,7 +138,7 @@ const UserFormPage = (props: Props) => {
   };
 
   useEffect(() => {
-    fetchData();
+    form.watch("state") && getAuthToken(fetchData, false);
   }, [form.watch("state")]);
   const borderStyle: CSSProperties[] = [
     {
@@ -140,11 +162,11 @@ const UserFormPage = (props: Props) => {
           <h6 className="text-xl font-medium">Don't give up</h6>
           <h3 className="text-3xl font-semibold">Just One Step</h3>
         </section>
-        <section className="max-w-xl mx-auto text-gray-300 py-3">
+        <section className="max-w-xl mx-auto text-gray-300 p-3">
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(Submit)}
-              className="grid grid-cols-2 gap-6"
+              className="grid  grid-col-1 md:grid-cols-2   gap-4"
             >
               <FormField
                 control={form.control}
@@ -198,10 +220,7 @@ const UserFormPage = (props: Props) => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-slate-300">State</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl className="bg-[#171f38]">
                         <SelectTrigger>
                           <SelectValue
@@ -241,13 +260,15 @@ const UserFormPage = (props: Props) => {
                       </FormControl>
 
                       <SelectContent className="bg-[#171f38] text-slate-300">
-                        {form
-                          .watch("cityOptions")
-                          .map(({ city_name }, index) => (
-                            <SelectItem key={index} value={city_name}>
-                              {city_name}
-                            </SelectItem>
-                          ))}
+                        {Array.isArray(form?.watch("cityOptions"))
+                          ? form
+                              ?.watch("cityOptions")
+                              .map(({ city_name }, index) => (
+                                <SelectItem key={index} value={city_name}>
+                                  {city_name}
+                                </SelectItem>
+                              ))
+                          : null}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -289,10 +310,7 @@ const UserFormPage = (props: Props) => {
                     <FormLabel className="text-slate-300">
                       Capital Investment
                     </FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl className="bg-[#171f38]">
                         <SelectTrigger>
                           <SelectValue
@@ -329,7 +347,7 @@ const UserFormPage = (props: Props) => {
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                         className="flex items-center !mt-0"
                       >
                         {["Yes", "No"].map((val, index) => (
@@ -351,14 +369,24 @@ const UserFormPage = (props: Props) => {
                   </FormItem>
                 )}
               />
-              <div className="col-span-2 flex gap-4">
+              <div className="sm:col-span-2 col-span-1 flex gap-4">
                 <Button
+                  onClick={() => {
+                    form.reset();
+                    form.setValue("experience", "");
+                    form.setValue("capitalInvestment", "");
+                    form.setValue("qualification", "");
+                  }}
                   type="reset"
                   className="flex-1 bg-transparent border hover:border-transparent border-white transition-colors"
                 >
-                  Cancel
+                  Clear
                 </Button>
-                <Button type="submit" className="flex-1">
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={form.formState.isSubmitting}
+                >
                   Submit
                 </Button>
               </div>
@@ -370,7 +398,7 @@ const UserFormPage = (props: Props) => {
         <FancyBorder
           key={index}
           mode="tailwind"
-          classNames="bg-[#121232] fixed [animation:_spin_10s_linear_infinite]"
+          classNames="bg-[#121232] fixed "
           styles={object}
         />
       ))}

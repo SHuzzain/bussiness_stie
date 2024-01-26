@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/drawer";
 import { useFormContext } from "react-hook-form";
 import { Button } from "./ui/button";
+import { formSchema } from "@/app/userInfo/(form)/page";
+import * as z from "zod";
 type Props = {
   isOpen?: boolean;
   setDrawer: (isOpen: boolean) => void;
@@ -17,10 +19,16 @@ type Props = {
 
 const AISuggestions = (props: Props) => {
   const { isOpen, setDrawer } = props;
-  const { watch, setValue, reset } = useFormContext();
-
+  const { watch, setValue, reset, getValues } = useFormContext();
+  const restForm = () => {
+    reset();
+    setValue("experience", "");
+    setValue("capitalInvestment", "");
+    setValue("qualification", "");
+    setDrawer(false);
+  };
   return (
-    <Drawer open={isOpen} onClose={() => reset()}>
+    <Drawer open={isOpen} onClose={restForm}>
       <DrawerContent className="bg-current">
         <div className="w-full">
           <DrawerHeader>
@@ -34,7 +42,13 @@ const AISuggestions = (props: Props) => {
                   <div className="w-10 h-10 animate-spin bg-gradient-to-tr from-transparent to-slate-400 rounded-full border-dashed border-2 border-white"></div>
                 </div>
               )}
-              <DrawerClose className="ml-auto" onClick={() => setDrawer(false)}>
+              <DrawerClose
+                className="ml-auto"
+                onClick={() => {
+                  setDrawer(false);
+                  restForm();
+                }}
+              >
                 <Button size={"icon"} variant={"ghost"}>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
