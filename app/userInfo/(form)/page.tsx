@@ -65,7 +65,6 @@ const UserFormPage = (props: Props) => {
   });
 
   const Submit = async (formData: z.infer<typeof formSchema>) => {
-    debugger;
     try {
       setDrawer(true);
       const { cityOptions, aiSuggestion, ...data } = formData;
@@ -157,7 +156,7 @@ const UserFormPage = (props: Props) => {
   ];
   return (
     <article className="bg-[#171f38] h-full flex justify-center items-center">
-      <div className="bg-[#242e4c9d] max-w-screen-xl flex-1 z-10">
+      <div className="bg-[#242e4c9d] max-w-screen-xl flex-1 z-10  max-sm:mt-48">
         <section className="flex items-center gap-5 flex-col text-gray-300 py-3">
           <h6 className="text-xl font-medium">Don't give up</h6>
           <h3 className="text-3xl font-semibold">Just One Step</h3>

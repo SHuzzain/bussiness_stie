@@ -19,7 +19,7 @@ type Props = {
 
 const AISuggestions = (props: Props) => {
   const { isOpen, setDrawer } = props;
-  const { watch, setValue, reset, getValues } = useFormContext();
+  const { watch, setValue, reset } = useFormContext();
   const restForm = () => {
     reset();
     setValue("experience", "");
@@ -68,7 +68,7 @@ const AISuggestions = (props: Props) => {
               </DrawerClose>
             </DrawerTitle>
             {watch("aiSuggestion") && (
-              <DrawerDescription className="overflow-y-auto">
+              <DrawerDescription className="overflow-y-auto h-72">
                 <pre className="text-wrap text-white">
                   {watch("aiSuggestion")}
                 </pre>
