@@ -10,8 +10,7 @@ import {
 } from "@/components/ui/drawer";
 import { useFormContext } from "react-hook-form";
 import { Button } from "./ui/button";
-import { formSchema } from "@/app/userInfo/(form)/page";
-import * as z from "zod";
+
 type Props = {
   isOpen?: boolean;
   setDrawer: (isOpen: boolean) => void;
@@ -68,7 +67,7 @@ const AISuggestions = (props: Props) => {
               </DrawerClose>
             </DrawerTitle>
             {watch("aiSuggestion") && (
-              <DrawerDescription className="overflow-y-auto h-72">
+              <DrawerDescription className="overflow-y-auto h-72 scrollbar-hide">
                 <pre className="text-wrap text-white">
                   {watch("aiSuggestion")}
                 </pre>

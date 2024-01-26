@@ -31,7 +31,7 @@ import { useRouter } from "next/navigation";
 
 type Props = {};
 
-export const formSchema = z.object({
+const formSchema = z.object({
   firstName: z.string().min(2).max(50),
   email: z.string().email(),
   state: z.string().min(1),
@@ -139,6 +139,7 @@ const UserFormPage = (props: Props) => {
   useEffect(() => {
     form.watch("state") && getAuthToken(fetchData, false);
   }, [form.watch("state")]);
+
   const borderStyle: CSSProperties[] = [
     {
       borderRadius: "30% 70% 58% 42% / 30% 38% 62% 70%",
