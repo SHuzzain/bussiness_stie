@@ -41,7 +41,8 @@ export async function getAISuggestion(
       },
       {
         role: "user",
-        content: "Generate job suggestions based on the following information:",
+        content:
+          "Generate job suggestions based on the following information and Qualification to briefy explanation:",
       },
       {
         role: "assistant",
